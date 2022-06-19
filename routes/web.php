@@ -1,6 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UsuarioController;
+use App\Http\Controllers\TelefonosController;
+use App\Http\Controllers\DireccionesController;
+use App\Http\Controllers\MetodosPagoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,6 +17,17 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
+Route::prefix('api')->group(function () {
+    
+    //RUTAS ESPECIFICAS
+    
+
+    //RUTAS AUTOMATICAS
+    Route::resource('/usuario', UsuarioController::class,['except'=>['create','edit']]);
+    Route::resource('/telefonos', TelefonosController::class,['except'=>['create','edit']]);
+    Route::resource('/direcciones', DireccionesController::class,['except'=>['create','edit']]);
+    Route::resource('/metodospago', MetodosPagoController::class,['except'=>['create','edit']]);
+ 
+
+
 });

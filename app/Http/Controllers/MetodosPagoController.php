@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use App\Models\Usuario;
+use App\Models\MetodosPago;
 
-class UsuarioController extends Controller
+class MetodosPagoController extends Controller
 {
     public function __construct() {
         
@@ -15,7 +15,7 @@ class UsuarioController extends Controller
     public function __invoke() {}
 
     public function index(){
-        $data=Usuario::all();
+        $data=MetodosPago::all()->load('usuario');
         $response=array(
             'status'=>'success',
             'code'=>200,
@@ -25,18 +25,19 @@ class UsuarioController extends Controller
     }
 
     public function show($id){
-        $usuario=Usuario::find($id);
-        if(is_object($usuario)){
+        $data=MetodosPago::find($id);
+        if(is_object($data)){
+            $data=$data->load('usuario');
             $response=array(
                 'status'=>'success',
                 'code'=>200,
-                'data'=>$usuario
+                'data'=>$data
             );
         }else{
             $response=array(
                 'status'=>'error',
                 'code'=>404,
-                'message'=>'Usuario no encontrado'
+                'message'=>'Metodo de pago no encontrado'
             );
         }
         return response()->json($response,$response['code']);
@@ -48,12 +49,9 @@ class UsuarioController extends Controller
         $data=array_map('trim',$data);
         $rules=[
             'id'=>'required',
-            'nombre'=>'required',
-            'apellidos'=>'required',
-            'rol'=>'required',
-            'email'=>'required|email|unique:usuario',
-            'contrasenia'=>'required',
-            'fechaRegistro'=>'required'
+            'idUsuario'=>'required',
+            'tipoTarjeta'=>'required',
+            'numTarjeta'=>'required'
             
         ];
         $valid=\validator($data,$rules);
@@ -66,15 +64,14 @@ class UsuarioController extends Controller
             );
         
         }else{
-            $usuario=new Usuario();
-            $usuario->id=$data['id'];
-            $usuario->nombre=$data['nombre'];
-            $usuario->apellidos=$data['apellidos'];
-            $usuario->rol=$data['rol'];
-            $usuario->email=$data['email'];
-            $usuario->contrasenia=hash('sha256',$data['contrasenia']);
-            $usuario->fechaRegistro=$data['fechaRegistro'];
-            $usuario->save();
+            
+            $metodospago=new MetodosPago();
+            $metodospago->id=$data['id'];
+            $metodospago->idUsuario=$data['idUsuario'];
+            $metodospago->tipoTarjeta=$data['tipoTarjeta'];
+            $metodospago->numTarjeta=$data['numTarjeta'];
+            $metodospago->save();
+
             $response=array(
                 'status'=>'success',
                 'code'=>200,
@@ -91,13 +88,9 @@ class UsuarioController extends Controller
         $data=array_map('trim',$data);
         $rules=[
             'id'=>'required',
-            'nombre'=>'required',
-            'apellidos'=>'required',
-            'rol'=>'required',
-            'email'=>'required|email',
-            'contrasenia'=>'required',
-            'fechaRegistro'=>'required'
-            
+            'idUsuario'=>'required',
+            'tipoTarjeta'=>'required',
+            'numTarjeta'=>'required' 
         ];
         $valid=\validator($data,$rules);
         if($valid->fails()){
@@ -110,7 +103,7 @@ class UsuarioController extends Controller
         }else{
             $id=$data['id'];
             
-            $updated=Usuario::where('id',$id)->update($data);
+            $updated=MetodosPago::where('id',$id)->update($data);
             if($updated>0){
                 $response=array(
                     'status'=>'success',
@@ -121,7 +114,7 @@ class UsuarioController extends Controller
                 $response=array(
                     'status'=>'error',
                     'code'=>400,
-                    'message'=>'No se pudo actualizar el usuario, puede ser que no exista'
+                    'message'=>'No se pudo actualizar el metodo de pago del usuario, puede ser que no exista'
                 );
             }
         }
@@ -131,18 +124,18 @@ class UsuarioController extends Controller
 
     public function destroy($id){
         if(isset($id)){
-            $deleted = Usuario::where('id',$id)->delete();
+            $deleted = MetodosPago::where('id',$id)->delete();
             if($deleted){
                 $response=array(
                     'status'=>'success',
                     'code'=>200,
-                    'message'=>'Usuario eliminado correctamente'
+                    'message'=>'Metodo de pago eliminado correctamente'
                 );
             }else{
                 $response=array(
                     'status'=>'error',
                     'code'=>400,
-                    'message'=>'No se pudo eliminar el recurso'
+                    'message'=>'No se pudo eliminar el metodo de pago'
                 );
             }
         }else{
@@ -154,9 +147,4 @@ class UsuarioController extends Controller
         }
         return response()->json($response,$response['code']);
     }
-
-
-
-
-
 }

@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use App\Models\Usuario;
+use App\Models\Telefonos;
 
-class UsuarioController extends Controller
+class TelefonosController extends Controller
 {
     public function __construct() {
         
@@ -15,7 +15,7 @@ class UsuarioController extends Controller
     public function __invoke() {}
 
     public function index(){
-        $data=Usuario::all();
+        $data=Telefonos::all()->load('usuario');
         $response=array(
             'status'=>'success',
             'code'=>200,
@@ -25,12 +25,13 @@ class UsuarioController extends Controller
     }
 
     public function show($id){
-        $usuario=Usuario::find($id);
-        if(is_object($usuario)){
+        $data=Telefonos::find($id);
+        if(is_object($data)){
+            $data=$data->load('usuario');
             $response=array(
                 'status'=>'success',
                 'code'=>200,
-                'data'=>$usuario
+                'data'=>$data
             );
         }else{
             $response=array(
@@ -48,12 +49,8 @@ class UsuarioController extends Controller
         $data=array_map('trim',$data);
         $rules=[
             'id'=>'required',
-            'nombre'=>'required',
-            'apellidos'=>'required',
-            'rol'=>'required',
-            'email'=>'required|email|unique:usuario',
-            'contrasenia'=>'required',
-            'fechaRegistro'=>'required'
+            'idUsuario'=>'required',
+            'numTelefono'=>'required|unique:telefonos'
             
         ];
         $valid=\validator($data,$rules);
@@ -66,15 +63,12 @@ class UsuarioController extends Controller
             );
         
         }else{
-            $usuario=new Usuario();
-            $usuario->id=$data['id'];
-            $usuario->nombre=$data['nombre'];
-            $usuario->apellidos=$data['apellidos'];
-            $usuario->rol=$data['rol'];
-            $usuario->email=$data['email'];
-            $usuario->contrasenia=hash('sha256',$data['contrasenia']);
-            $usuario->fechaRegistro=$data['fechaRegistro'];
-            $usuario->save();
+            $telefonos=new Telefonos();
+            $telefonos->id=$data['id'];
+            $telefonos->idUsuario=$data['idUsuario'];
+            $telefonos->numTelefono=$data['numTelefono'];
+            $telefonos->save();
+
             $response=array(
                 'status'=>'success',
                 'code'=>200,
@@ -91,12 +85,9 @@ class UsuarioController extends Controller
         $data=array_map('trim',$data);
         $rules=[
             'id'=>'required',
-            'nombre'=>'required',
-            'apellidos'=>'required',
-            'rol'=>'required',
-            'email'=>'required|email',
-            'contrasenia'=>'required',
-            'fechaRegistro'=>'required'
+            'idUsuario'=>'required',
+            'numTelefono'=>'required'
+            
             
         ];
         $valid=\validator($data,$rules);
@@ -110,7 +101,7 @@ class UsuarioController extends Controller
         }else{
             $id=$data['id'];
             
-            $updated=Usuario::where('id',$id)->update($data);
+            $updated=Telefonos::where('id',$id)->update($data);
             if($updated>0){
                 $response=array(
                     'status'=>'success',
@@ -121,7 +112,7 @@ class UsuarioController extends Controller
                 $response=array(
                     'status'=>'error',
                     'code'=>400,
-                    'message'=>'No se pudo actualizar el usuario, puede ser que no exista'
+                    'message'=>'No se pudo actualizar el telefono del usuario, puede ser que no exista'
                 );
             }
         }
@@ -131,18 +122,18 @@ class UsuarioController extends Controller
 
     public function destroy($id){
         if(isset($id)){
-            $deleted = Usuario::where('id',$id)->delete();
+            $deleted = Telefonos::where('id',$id)->delete();
             if($deleted){
                 $response=array(
                     'status'=>'success',
                     'code'=>200,
-                    'message'=>'Usuario eliminado correctamente'
+                    'message'=>'Telefono eliminado correctamente'
                 );
             }else{
                 $response=array(
                     'status'=>'error',
                     'code'=>400,
-                    'message'=>'No se pudo eliminar el recurso'
+                    'message'=>'No se pudo eliminar el telefono'
                 );
             }
         }else{
@@ -154,9 +145,4 @@ class UsuarioController extends Controller
         }
         return response()->json($response,$response['code']);
     }
-
-
-
-
-
 }

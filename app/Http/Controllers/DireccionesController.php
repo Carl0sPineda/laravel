@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use App\Models\Usuario;
+use App\Models\Direcciones;
 
-class UsuarioController extends Controller
+
+class DireccionesController extends Controller
 {
     public function __construct() {
         
@@ -15,7 +16,7 @@ class UsuarioController extends Controller
     public function __invoke() {}
 
     public function index(){
-        $data=Usuario::all();
+        $data=Direcciones::all()->load('usuario');
         $response=array(
             'status'=>'success',
             'code'=>200,
@@ -25,18 +26,19 @@ class UsuarioController extends Controller
     }
 
     public function show($id){
-        $usuario=Usuario::find($id);
-        if(is_object($usuario)){
+        $data=Direcciones::find($id);
+        if(is_object($data)){
+            $data=$data->load('usuario');
             $response=array(
                 'status'=>'success',
                 'code'=>200,
-                'data'=>$usuario
+                'data'=>$data
             );
         }else{
             $response=array(
                 'status'=>'error',
                 'code'=>404,
-                'message'=>'Usuario no encontrado'
+                'message'=>'Direccion no encontrada'
             );
         }
         return response()->json($response,$response['code']);
@@ -48,12 +50,11 @@ class UsuarioController extends Controller
         $data=array_map('trim',$data);
         $rules=[
             'id'=>'required',
-            'nombre'=>'required',
-            'apellidos'=>'required',
-            'rol'=>'required',
-            'email'=>'required|email|unique:usuario',
-            'contrasenia'=>'required',
-            'fechaRegistro'=>'required'
+            'idUsuario'=>'required',
+            'provincia'=>'required',
+            'canton'=>'required',
+            'distrito'=>'required',
+            'otrasSenias'=>'',
             
         ];
         $valid=\validator($data,$rules);
@@ -66,15 +67,16 @@ class UsuarioController extends Controller
             );
         
         }else{
-            $usuario=new Usuario();
-            $usuario->id=$data['id'];
-            $usuario->nombre=$data['nombre'];
-            $usuario->apellidos=$data['apellidos'];
-            $usuario->rol=$data['rol'];
-            $usuario->email=$data['email'];
-            $usuario->contrasenia=hash('sha256',$data['contrasenia']);
-            $usuario->fechaRegistro=$data['fechaRegistro'];
-            $usuario->save();
+            
+            $direcciones=new Direcciones();
+            $direcciones->id=$data['id'];
+            $direcciones->idUsuario=$data['idUsuario'];
+            $direcciones->provincia=$data['provincia'];
+            $direcciones->canton=$data['canton'];
+            $direcciones->distrito=$data['distrito'];
+            $direcciones->otrasSenias=$data['otrasSenias'];
+            $direcciones->save();
+
             $response=array(
                 'status'=>'success',
                 'code'=>200,
@@ -91,12 +93,12 @@ class UsuarioController extends Controller
         $data=array_map('trim',$data);
         $rules=[
             'id'=>'required',
-            'nombre'=>'required',
-            'apellidos'=>'required',
-            'rol'=>'required',
-            'email'=>'required|email',
-            'contrasenia'=>'required',
-            'fechaRegistro'=>'required'
+            'idUsuario'=>'required',
+            'provincia'=>'required',
+            'canton'=>'required',
+            'distrito'=>'required',
+            'otrasSenias'
+            
             
         ];
         $valid=\validator($data,$rules);
@@ -110,7 +112,7 @@ class UsuarioController extends Controller
         }else{
             $id=$data['id'];
             
-            $updated=Usuario::where('id',$id)->update($data);
+            $updated=Direcciones::where('id',$id)->update($data);
             if($updated>0){
                 $response=array(
                     'status'=>'success',
@@ -121,7 +123,7 @@ class UsuarioController extends Controller
                 $response=array(
                     'status'=>'error',
                     'code'=>400,
-                    'message'=>'No se pudo actualizar el usuario, puede ser que no exista'
+                    'message'=>'No se pudo actualizar la direccion del usuario, puede ser que no exista'
                 );
             }
         }
@@ -131,18 +133,18 @@ class UsuarioController extends Controller
 
     public function destroy($id){
         if(isset($id)){
-            $deleted = Usuario::where('id',$id)->delete();
+            $deleted = Direcciones::where('id',$id)->delete();
             if($deleted){
                 $response=array(
                     'status'=>'success',
                     'code'=>200,
-                    'message'=>'Usuario eliminado correctamente'
+                    'message'=>'Direccion eliminado correctamente'
                 );
             }else{
                 $response=array(
                     'status'=>'error',
                     'code'=>400,
-                    'message'=>'No se pudo eliminar el recurso'
+                    'message'=>'No se pudo eliminar la direccion'
                 );
             }
         }else{
@@ -154,9 +156,4 @@ class UsuarioController extends Controller
         }
         return response()->json($response,$response['code']);
     }
-
-
-
-
-
 }

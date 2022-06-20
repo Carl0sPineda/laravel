@@ -7,6 +7,9 @@ use App\Http\Controllers\DireccionesController;
 use App\Http\Controllers\MetodosPagoController;
 use App\Http\Controllers\EmpleadoController;
 use App\Http\Controllers\OrdenCompraController;
+use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\DetalleOrdenController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -31,5 +34,7 @@ Route::prefix('api')->group(function () {
     Route::resource('/telefonos', TelefonosController::class,['except'=>['create','edit']]);
     Route::resource('/direcciones', DireccionesController::class,['except'=>['create','edit']]);
     Route::resource('/metodospago', MetodosPagoController::class,['except'=>['create','edit']]);
+    Route::resource('/categoria', CategoriaController::class,['except'=>['create','edit']]);
+    Route::resource('/detalleorden', DetalleOrdenController::class,['except'=>['create','edit']]);
 
 });

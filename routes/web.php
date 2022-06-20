@@ -5,6 +5,8 @@ use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\TelefonosController;
 use App\Http\Controllers\DireccionesController;
 use App\Http\Controllers\MetodosPagoController;
+use App\Http\Controllers\EmpleadoController;
+use App\Http\Controllers\OrdenCompraController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,11 +25,11 @@ Route::prefix('api')->group(function () {
     
 
     //RUTAS AUTOMATICAS
+    Route::resource('/ordencompra', OrdenCompraController::class,['except'=>['create','edit']]);
     Route::resource('/usuario', UsuarioController::class,['except'=>['create','edit']]);
+    Route::resource('/empleado', EmpleadoController::class,['except'=>['create','edit']]);
     Route::resource('/telefonos', TelefonosController::class,['except'=>['create','edit']]);
     Route::resource('/direcciones', DireccionesController::class,['except'=>['create','edit']]);
     Route::resource('/metodospago', MetodosPagoController::class,['except'=>['create','edit']]);
- 
-
 
 });

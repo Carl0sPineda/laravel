@@ -10,7 +10,7 @@ use App\Models\Categoria;
 class CategoriaController extends Controller
 {
     public function __construct() {
-        
+        //$this->middleware('api.auth',['except'=>['store','login','show','getImage']]);
 }
 
 
@@ -49,8 +49,7 @@ public function store(Request $request){
     $data=json_decode($json,true);
     $data=array_map('trim',$data);
     $rules=[
-        'id'=>'required',
-        'nombre'=>'required',
+        'id'=>'',
         'descripcion'=>'required',
         
         
@@ -65,10 +64,12 @@ public function store(Request $request){
         );
     
     }else{
+        /*$jwtAuth=new JwtAuth();
+        $token=$request->header('token',null);
+        $usuario=$jwtAuth->checkToken($token,true);*/
         
         $categoria=new Categoria();
         $categoria->id=$data['id'];
-        $categoria->nombre=$data['nombre'];
         $categoria->descripcion=$data['descripcion'];
         $categoria->save();
 
@@ -88,7 +89,6 @@ public function update(Request $request){
     $data=array_map('trim',$data);
     $rules=[
         'id'=>'required',
-        'nombre'=>'required',
         'descripcion'=>'required',
         
         

@@ -27,8 +27,12 @@ use App\Http\Controllers\DetalleOrdenController;
 Route::prefix('api')->group(function () {
     
     //RUTAS ESPECIFICAS
+    Route::post('/usuario/login',[UsuarioController::class,'login']);
+    Route::get('/usuario/getidentity',[UsuarioController::class,'getIdentity']);
+    Route::post('/usuario/upload',[UsuarioController::class,'upload']);
+    Route::get('/usuario/getimage/{filename}',[UsuarioController::class,'getImage']);
     Route::get('/productos/image/{filename}',[ProductosController::class,'getImage']);
-    Route::get('/productos/upload',[ProductosController::class,'upload']);
+    Route::post('/productos/upload',[ProductosController::class,'upload']);//.
 
     //RUTAS AUTOMATICAS
     Route::resource('/usuario', UsuarioController::class,['except'=>['create','edit']]);

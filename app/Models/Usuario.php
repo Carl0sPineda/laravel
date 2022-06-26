@@ -14,10 +14,11 @@ class Usuario extends Model
         'id',
         'nombre',
         'apellidos',
-        'rol',
+        'role',
         'email',
         'contrasenia',
-        'fechaRegistro'
+        'image'
+       
     ];
 
     //un usuario puede tener varios telefenos 

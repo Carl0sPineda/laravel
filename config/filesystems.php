@@ -43,11 +43,20 @@ return [
             'visibility' => 'public',
         ],
 
+        'usuarios' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/usuarios'),
+            'url' => env('APP_URL').'/storage',
+            'visibility' => 'public',
+            'throw' => false,
+        ],
+
         'productos' => [
             'driver' => 'local',
             'root' => storage_path('app/public/productos'),
             'url' => env('APP_URL').'/storage',
             'visibility' => 'public',
+            'throw' => false,
         ],
 
 

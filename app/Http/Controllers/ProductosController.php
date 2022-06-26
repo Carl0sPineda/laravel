@@ -5,11 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\Productos;
+use App\Helpers\JwtAuth;
 
 class ProductosController extends Controller
 {
     public function __construct() {
-        
+     // $this->middleware('api.auth',['except'=>['index','store','login','show','getImage']]);
     }
 
     public function __invoke() {}
@@ -49,12 +50,12 @@ class ProductosController extends Controller
         $data=json_decode($json,true);
         $data=array_map('trim',$data);
         $rules=[
-            'id'=>'required',
+            //'id'=>'',
             'idCatgoria'=>'required',
             'descripcion'=>'required',
             'stock'=>'required',
-            'precio'=>'required'
-            //imagen
+            'precio'=>'required',
+            'image'=>'required'
             
         ];
         $valid=\validator($data,$rules);
@@ -67,13 +68,17 @@ class ProductosController extends Controller
             );
         
         }else{
+                $jwtAuth=new JwtAuth();
+                $token=$request->header('token',null);
+                $usuario=$jwtAuth->checkToken($token,true);
 
             $productos=new Productos();
-            $productos->id=$data['id'];
+          //  $productos->id=$data['id'];
             $productos->idCatgoria=$data['idCatgoria'];
             $productos->descripcion=$data['descripcion'];
             $productos->stock=$data['stock'];
             $productos->precio=$data['precio'];
+            $productos->image=$data['image'];
             $productos->save();
 
             $response=array(
@@ -95,7 +100,8 @@ class ProductosController extends Controller
             'idCatgoria'=>'required',
             'descripcion'=>'required',
             'stock'=>'required',
-            'precio'=>'required'
+            'precio'=>'required',
+            //'image'=>'',
         ];
         $valid=\validator($data,$rules);
         if($valid->fails()){
@@ -153,34 +159,35 @@ class ProductosController extends Controller
         return response()->json($response,$response['code']);
     }
 
-    public function uploadImage(Request $request){
+    public function upload(Request $request){
         $image=$request->file('file0');
         $valid=\Validator::make($request->all(),[
             'file0'=>'required|image|mimes:jpg,png'
+            
         ]);
         if(!$image||$valid->fails()){
             $response=array(
                 'status'=>'error',
                 'code'=>406,
-                'message'=>'Error al subir el archivo',
+                'message'=>'Error al subir el archivo img',
                 'errors'=>$valid->errors()
             );
         }else{
-            $filename=time().$image->getClientOriginalName();
-            \Storage::disk('')->put($filename,\File::get($image));
+            $image_name=time().$image->getClientOriginalName();
+            \Storage::disk('productos')->put($image_name,\File::get($image));
             $response=array(
                 'status'=>'success',
                 'code'=>200,
                 'message'=>'Imagen guardada correctamente',
-                'image_name'=>$filename
+                'image'=>$image_name
             );
         }
         return response()->json($response,$response['code']);
     }
     public function getImage($filename){
-        $exist=\Storage::disk('products')->exists($filename);
+        $exist=\Storage::disk('productos')->exists($filename);
         if($exist){
-            $file=\Storage::disk('products')->get($filename);
+            $file=\Storage::disk('productos')->get($filename);
             return new Response($file,200);
         }else{
             $response=array(

@@ -17,7 +17,7 @@ class Productos extends Model
         'descripcion',
         'stock',
         'precio',
-        'imagen'
+        'image'
 
     ];
 

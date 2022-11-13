@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\OrdenCompra;
+use App\Helpers\JwtAuth;
+use Illuminate\Support\Facades\DB;
 
 class OrdenCompraController extends Controller
 {
@@ -12,7 +14,7 @@ class OrdenCompraController extends Controller
 
     public function index(){
 
-        $data=OrdenCompra::all()->load("usuario","empleado");
+        $data=DB::select('EXECUTE pa_all_ordenCompra'); 
         $response=array(
             'status' => 'success',
             'code' => '200',
@@ -22,22 +24,48 @@ class OrdenCompraController extends Controller
         return response()->json($response,200);
     }
 
-    public function show($id){
-        $data=OrdenCompra::find($id);
-        if(is_object($data)){
-            $data=$data->load("usuario","empleado");
+   /* public function show($id){
+        $data=DB::select('EXECUTE pa_ordenCompra_id ?', array($id));
             $response=array(
                 'status'=>'success',
                 'code'=>200,
                 'data'=>$data
             );
-        }else{
+        // }else{
+        //     $response=array(
+        //         'status'=>'error',
+        //         'code'=>404,
+        //         'message'=>'Ingreso de vehiculo no encontrada'
+        //     );
+        // }
+        return response()->json($response,$response['code']);
+    }*/
+
+    
+        public function showById($id){
+        $data=DB::select('EXECUTE pa_ordenCompra_id ?', array($id));
             $response=array(
-                'status'=>'error',
-                'code'=>404,
-                'message'=>'Ingreso de vehiculo no encontrada'
+                'status'=>'success',
+                'code'=>200,
+                'data'=>$data
             );
-        }
+        // }else{
+        //     $response=array(
+        //         'status'=>'error',
+        //         'code'=>404,
+        //         'message'=>'Ingreso de vehiculo no encontrada'
+        //     );
+        // }
+        return response()->json($response,$response['code']);
+    }
+
+    public function show($id){
+        $data=DB::select('EXECUTE pa_ordenCompra_Usuario ?', array($id));
+            $response=array(
+                'status'=>'success',
+                'code'=>200,
+                'data'=>$data
+            );
         return response()->json($response,$response['code']);
     }
 
@@ -46,13 +74,13 @@ class OrdenCompraController extends Controller
         $data=json_decode($json,true);
         $data=array_map('trim',$data);
         $rules=[
+           // 'id'=>'',
             'idUsuario'=>'required',
             'idEmpleado'=>'required',
-            'fechaOrden'=>'required',
-            'subTotal'=>'required',
-            'impuesto'=>'required',
+            'subtotal'=>'required',
             'descuento'=>'required',
-            'total'=>'required', 
+            'total'=>'required',
+            'fechaEnvio'=>'required'
         ];
         
         $valid=\validator($data,$rules);
@@ -65,15 +93,29 @@ class OrdenCompraController extends Controller
             );
         
         }else{
-            $ordenCompra = new OrdenCompra();
-            $ordenCompra->idUsuario=$data['idUsuario'];
-            $ordenCompra->idEmpleado=$data['idEmpleado'];
-            $ordenCompra->fechaOrden=$data['fechaOrden'];
-            $ordenCompra->subTotal=$data['subTotal'];
-            $ordenCompra->impuesto=$data['impuesto'];
-            $ordenCompra->descuento=$data['descuento'];
-            $ordenCompra->total=$data['total'];
-            $ordenCompra->save();
+            $jwtAuth=new JwtAuth();
+            $token=$request->header('token',null);
+            $usuario=$jwtAuth->checkToken($token,true);
+
+
+            $response = DB::INSERT(
+                'EXECUTE pa_create_ordenCompra ?,?,?,?,?,?',
+            array(
+               // $data['id'],
+                $data['idUsuario'],
+                $data['idEmpleado'],
+                $data['subtotal'],
+                $data['descuento'],
+                $data['total'],
+                $data['fechaEnvio']));
+
+            // $ordenCompra = new OrdenCompra();
+            //$ordenCompra->id=$data['id'];
+            // $ordenCompra->idUsuario=$usuario->sub;
+            // $ordenCompra->idUsuario=$data['idUsuario'];
+            // $ordenCompra->idEmpleado=$data['idEmpleado'];
+            // $ordenCompra->save();
+
             $response=array(
                 'status'=>'success',
                 'code'=>200,
@@ -90,6 +132,10 @@ class OrdenCompraController extends Controller
         $data=array_map('trim',$data);
         $rules=[
             'id'=>'required',
+            'subtotal',
+            'descuento',
+            'total',
+            'fechaEnvio'
         ];
         $valid=\validator($data,$rules);
         if($valid->fails()){
@@ -101,8 +147,17 @@ class OrdenCompraController extends Controller
             );
         }else{
             $id=$data['id'];
-            $updated=OrdenCompra::where('id',$id)->update($data);
-            if($updated>0){
+            $updated = DB::UPDATE(
+                'exec pa_update_ordenCompra ?,?,?,?,?',
+                array(
+                    $data['id'],
+                    $data['subtotal'],
+                    $data['descuento'],
+                    $data['total'],
+                    $data['fechaEnvio']
+                )
+            );
+                if($updated>1){
                 $response=array(
                     'status'=>'success',
                     'code'=>200,
@@ -122,7 +177,7 @@ class OrdenCompraController extends Controller
 
     public function destroy($id){
         if(isset($id)){
-            $deleted = OrdenCompra::where('id',$id)->delete();
+            $deleted = DB::delete('EXECUTE pa_delete_ordenCompra ?',array($id));
             if($deleted){
                 $response=array(
                     'status'=>'success',

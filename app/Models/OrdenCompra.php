@@ -14,11 +14,11 @@ class OrdenCompra extends Model
         'id',
         'idUsuario',
         'idEmpleado',
-        'fechaOrden',
-        'subTotal',
-        'impuesto',
+        'subtotal',
         'descuento',
-        'total'
+        'total',
+        'fechaEnvio'
+        
     ];
 
     //orden compra tiene un usuario

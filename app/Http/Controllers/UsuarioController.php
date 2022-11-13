@@ -6,17 +6,18 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\Usuario;
 use App\Helpers\JwtAuth;
+use Illuminate\Support\Facades\DB;
 
 class UsuarioController extends Controller
 {
     public function __construct() {
-        $this->middleware('api.auth',['except'=>['index','store','login','show','getImage','uploadImage']]);
+        //$this->middleware('api.auth',['except'=>['index','store','login', 'update','show','getImage','uploadImage']]);
     }
 
     public function __invoke() {}
 
     public function index(){
-        $data=Usuario::all();
+        $data = DB::select('EXECUTE pa_all_usuario'); 
         $response=array(
             'status'=>'success',
             'code'=>200,
@@ -26,20 +27,13 @@ class UsuarioController extends Controller
     }
 
     public function show($id){
-        $usuario=Usuario::find($id);
-        if(is_object($usuario)){
+        $usuario=DB::select('EXECUTE pa_usuario_id ?', array($id));
+        
             $response=array(
                 'status'=>'success',
                 'code'=>200,
                 'data'=>$usuario
             );
-        }else{
-            $response=array(
-                'status'=>'error',
-                'code'=>404,
-                'message'=>'Usuario no encontrado'
-            );
-        }
         return response()->json($response,$response['code']);
     }
 
@@ -53,9 +47,9 @@ class UsuarioController extends Controller
             'apellidos'=>'required',
             'role'=>'required',
             'email'=>'required|email|unique:usuario',
+           // 'email'=>'required',
             'contrasenia'=>'required',
-            'image'=>''
-            
+            'image'
             
         ];
         $valid=\validator($data,$rules);
@@ -68,20 +62,22 @@ class UsuarioController extends Controller
             );
         
         }else{
-
-            $jwtAuth=new JwtAuth();
+               /* $jwtAuth=new JwtAuth();
                 $token=$request->header('token',null);
-                $user=$jwtAuth->checkToken($token,true);
+                $usuario=$jwtAuth->checkToken($token,true);*/
+            $password = hash('sha256',$data['contrasenia']);
+            $response = DB::INSERT(
+                'EXECUTE pa_create_usuario ?,?,?,?,?,?,?',
+            array(
+                $data['id'],
+                $data['nombre'],
+                $data['apellidos'],
+                $data['role'],
+                $data['email'],
+               // $data['contrasenia'],
+               $password,
+                $data['image']));
 
-            $usuario=new Usuario();
-            $usuario->id=$data['id'];
-            $usuario->nombre=$data['nombre'];
-            $usuario->apellidos=$data['apellidos'];
-            $usuario->role=$data['role'];
-            $usuario->email=$data['email'];
-            $usuario->contrasenia=hash('sha256',$data['contrasenia']);
-            $usuario->image=$data['image'];
-            $usuario->save();
             $response=array(
                 'status'=>'success',
                 'code'=>200,
@@ -100,11 +96,10 @@ class UsuarioController extends Controller
             'id'=>'required',
             'nombre'=>'required',
             'apellidos'=>'required',
-            'role'=>'required',
+            // 'role'=>'required',
             'email'=>'required|email',
             'contrasenia'=>'required',
             'image'=>''
-            
         ];
         $valid=\validator($data,$rules);
         if($valid->fails()){
@@ -115,10 +110,26 @@ class UsuarioController extends Controller
                 'errors'=>$valid->errors()
             );
         }else{
-            $id=$data['id'];
             
-            $updated=Usuario::where('id',$id)->update($data);
-            if($updated>0){
+           /* $jwtAuth=new JwtAuth();
+            $token=$request->header('token',null);
+            $usuario=$jwtAuth->checkToken($token,true);*/
+        
+            $id=$data['id'];
+
+            $updated = DB::UPDATE(
+                'EXECUTE pa_update_usuario ?,?,?,?,?,?',
+                array(
+                    $data['id'],
+                    $data['nombre'],
+                    $data['apellidos'],
+                    $data['email'],
+                    $data['contrasenia'],
+                    $data['image']
+
+                )
+            );
+            if($updated<1){
                 $response=array(
                     'status'=>'success',
                     'code'=>200,
@@ -138,7 +149,7 @@ class UsuarioController extends Controller
 
     public function destroy($id){
         if(isset($id)){
-            $deleted = Usuario::where('id',$id)->delete();
+            $deleted = DB::delete('EXECUTE pa_delete_usuario ?',array($id));
             if($deleted){
                 $response=array(
                     'status'=>'success',
@@ -206,7 +217,7 @@ class UsuarioController extends Controller
 
     }
 
-    public function uploadImage(Request $request){
+    public function upload(Request $request){
         $image=$request->file('file0');
         $valid=\Validator::make($request->all(),[
             'file0'=>'required|image|mimes:jpg,png'
@@ -220,13 +231,13 @@ class UsuarioController extends Controller
                 'errors'=>$valid->errors()
             );
         }else{
-            $filename=time().$image->getClientOriginalName();
-            \Storage::disk('usuarios')->put($filename,\File::get($image));
+            $image_name=time().$image->getClientOriginalName();
+            \Storage::disk('usuarios')->put($image_name,\File::get($image));
             $response=array(
                 'status'=>'success',
                 'code'=>200,
                 'message'=>'Imagen guardada correctamente',
-                'image_name'=>$filename
+                'image'=>$image_name
             );
         }
         return response()->json($response,$response['code']);

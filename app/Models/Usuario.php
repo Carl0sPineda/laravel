@@ -17,7 +17,7 @@ class Usuario extends Model
         'role',
         'email',
         'contrasenia',
-        'image'
+        'image',
        
     ];
 

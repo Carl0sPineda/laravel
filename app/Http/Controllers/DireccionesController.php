@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\Direcciones;
-
+use Illuminate\Support\Facades\DB;
 
 class DireccionesController extends Controller
 {
@@ -16,7 +16,7 @@ class DireccionesController extends Controller
     public function __invoke() {}
 
     public function index(){
-        $data=Direcciones::all()->load('usuario');
+        $data = DB::select('EXECUTE pa_all_direcciones'); 
         $response=array(
             'status'=>'success',
             'code'=>200,
@@ -26,21 +26,20 @@ class DireccionesController extends Controller
     }
 
     public function show($id){
-        $data=Direcciones::find($id);
-        if(is_object($data)){
+        $data=DB::select('EXECUTE pa_direcciones_id ?', array($id));
             $data=$data->load('usuario');
             $response=array(
                 'status'=>'success',
                 'code'=>200,
                 'data'=>$data
             );
-        }else{
-            $response=array(
-                'status'=>'error',
-                'code'=>404,
-                'message'=>'Direccion no encontrada'
-            );
-        }
+        // }else{
+        //     $response=array(
+        //         'status'=>'error',
+        //         'code'=>404,
+        //         'message'=>'Direccion no encontrada'
+        //     );
+        // }
         return response()->json($response,$response['code']);
     }
 
@@ -49,7 +48,7 @@ class DireccionesController extends Controller
         $data=json_decode($json,true);
         $data=array_map('trim',$data);
         $rules=[
-            'id'=>'required',
+           // 'id'=>'',
             'idUsuario'=>'required',
             'provincia'=>'required',
             'canton'=>'required',
@@ -67,15 +66,25 @@ class DireccionesController extends Controller
             );
         
         }else{
+            $response = DB::INSERT(
+                'EXECUTE pa_create_direccion ?,?,?,?,?',
+            array(
+               // $data['id'],
+                $data['idUsuario'],
+                $data['provincia'],
+                $data['canton'],
+                $data['distrito'],
+                $data['otrasSenias']
+            ));
             
-            $direcciones=new Direcciones();
-            $direcciones->id=$data['id'];
-            $direcciones->idUsuario=$data['idUsuario'];
-            $direcciones->provincia=$data['provincia'];
-            $direcciones->canton=$data['canton'];
-            $direcciones->distrito=$data['distrito'];
-            $direcciones->otrasSenias=$data['otrasSenias'];
-            $direcciones->save();
+            // $direcciones=new Direcciones();
+           // $direcciones->id=$data['id'];
+            // $direcciones->idUsuario=$data['idUsuario'];
+            // $direcciones->provincia=$data['provincia'];
+            // $direcciones->canton=$data['canton'];
+            // $direcciones->distrito=$data['distrito'];
+            // $direcciones->otrasSenias=$data['otrasSenias'];
+            // $direcciones->save();
 
             $response=array(
                 'status'=>'success',
@@ -92,8 +101,8 @@ class DireccionesController extends Controller
 
         $data=array_map('trim',$data);
         $rules=[
-            'id'=>'required',
-            'idUsuario'=>'required',
+            'id'=>'',
+            //'idUsuario'=>'required',
             'provincia'=>'required',
             'canton'=>'required',
             'distrito'=>'required',
@@ -112,7 +121,17 @@ class DireccionesController extends Controller
         }else{
             $id=$data['id'];
             
-            $updated=Direcciones::where('id',$id)->update($data);
+            $updated = DB::UPDATE(
+                'exec pa_update_direccion  ?,?,?,?,?',
+                array(
+                    $id,
+                    $data['provincia'],
+                    $data['canton'],
+                    $data['distrito'],
+                    $data['otrasSenias'],
+                )
+            );
+            // $updated=Direcciones::where('id',$id)->update($data);
             if($updated>0){
                 $response=array(
                     'status'=>'success',
@@ -133,7 +152,7 @@ class DireccionesController extends Controller
 
     public function destroy($id){
         if(isset($id)){
-            $deleted = Direcciones::where('id',$id)->delete();
+            $deleted = DB::delete('EXECUTE pa_delete_direccion ?',array($id));
             if($deleted){
                 $response=array(
                     'status'=>'success',

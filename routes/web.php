@@ -32,7 +32,9 @@ Route::prefix('api')->group(function () {
     Route::post('/usuario/upload',[UsuarioController::class,'upload']);
     Route::get('/usuario/getimage/{filename}',[UsuarioController::class,'getImage']);
     Route::get('/productos/image/{filename}',[ProductosController::class,'getImage']);
-    Route::post('/productos/upload',[ProductosController::class,'upload']);//.
+    Route::post('/productos/upload',[ProductosController::class,'upload']);
+    Route::get('ordencompra/showById/{id}',[OrdenCompraController::class,'showById']);
+    Route::get('/detalleorden/showByOrden/{id}',[DetalleOrdenController::class,'showByOrden']);
 
     //RUTAS AUTOMATICAS
     Route::resource('/usuario', UsuarioController::class,['except'=>['create','edit']]);

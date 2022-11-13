@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\Productos;
+use App\Models\Categoria;
 use App\Helpers\JwtAuth;
+use Illuminate\Support\Facades\DB;
 
 class ProductosController extends Controller
 {
@@ -16,7 +18,7 @@ class ProductosController extends Controller
     public function __invoke() {}
 
     public function index(){
-        $data=Productos::all()->load('categoria');
+        $data = DB::select('EXECUTE pa_all_producto'); 
         $response=array(
             'status'=>'success',
             'code'=>200,
@@ -26,21 +28,13 @@ class ProductosController extends Controller
     }
 
     public function show($id){
-        $data=Productos::find($id);
-        if(is_object($data)){
-            $data=$data->load('categoria');
+        $data=DB::select('EXECUTE pa_producto_id ?', array($id));
+        //$categoria=$data->load('categoria');
             $response=array(
                 'status'=>'success',
                 'code'=>200,
                 'data'=>$data
             );
-        }else{
-            $response=array(
-                'status'=>'error',
-                'code'=>404,
-                'message'=>'Producto no encontrado'
-            );
-        }
         return response()->json($response,$response['code']);
     }
 
@@ -50,12 +44,12 @@ class ProductosController extends Controller
         $data=json_decode($json,true);
         $data=array_map('trim',$data);
         $rules=[
-            //'id'=>'',
+           // 'id'=>'',
             'idCatgoria'=>'required',
             'descripcion'=>'required',
             'stock'=>'required',
             'precio'=>'required',
-            'image'=>'required'
+            'imagen'=>'required'
             
         ];
         $valid=\validator($data,$rules);
@@ -68,19 +62,20 @@ class ProductosController extends Controller
             );
         
         }else{
-                $jwtAuth=new JwtAuth();
+               /* $jwtAuth=new JwtAuth();
                 $token=$request->header('token',null);
-                $usuario=$jwtAuth->checkToken($token,true);
+                $usuario=$jwtAuth->checkToken($token,true);*/
 
-            $productos=new Productos();
-          //  $productos->id=$data['id'];
-            $productos->idCatgoria=$data['idCatgoria'];
-            $productos->descripcion=$data['descripcion'];
-            $productos->stock=$data['stock'];
-            $productos->precio=$data['precio'];
-            $productos->image=$data['image'];
-            $productos->save();
-
+                $response = DB::INSERT(
+                    'EXECUTE pa_create_producto ?,?,?,?,?',
+                array(
+                    //$data['id'],
+                    $data['idCatgoria'],
+                    $data['descripcion'],
+                    $data['stock'],
+                    $data['precio'],
+                    $data['imagen'],
+                ));
             $response=array(
                 'status'=>'success',
                 'code'=>200,
@@ -101,7 +96,8 @@ class ProductosController extends Controller
             'descripcion'=>'required',
             'stock'=>'required',
             'precio'=>'required',
-            //'image'=>'',
+            'imagen'=>''
+           
         ];
         $valid=\validator($data,$rules);
         if($valid->fails()){
@@ -114,7 +110,17 @@ class ProductosController extends Controller
         }else{
             $id=$data['id'];
             
-            $updated=Productos::where('id',$id)->update($data);
+            $updated = DB::UPDATE(
+                'exec pa_update_categoria ?,?,?,?,?,?',
+                array(
+                    $id,
+                    $data['idCatgoria'],
+                    $data['descripcion'],
+                    $data['stock'],
+                    $data['precio'],
+                    $data['imagen']
+                )
+            );
             if($updated>0){
                 $response=array(
                     'status'=>'success',
@@ -135,7 +141,7 @@ class ProductosController extends Controller
 
     public function destroy($id){
         if(isset($id)){
-            $deleted = Productos::where('id',$id)->delete();
+            $deleted = DB::delete('EXECUTE  pa_delete_producto ?',array($id));
             if($deleted){
                 $response=array(
                     'status'=>'success',
@@ -160,12 +166,12 @@ class ProductosController extends Controller
     }
 
     public function upload(Request $request){
-        $image=$request->file('file0');
+        $imagen=$request->file('file0');
         $valid=\Validator::make($request->all(),[
             'file0'=>'required|image|mimes:jpg,png'
             
         ]);
-        if(!$image||$valid->fails()){
+        if(!$imagen||$valid->fails()){
             $response=array(
                 'status'=>'error',
                 'code'=>406,
@@ -173,13 +179,13 @@ class ProductosController extends Controller
                 'errors'=>$valid->errors()
             );
         }else{
-            $image_name=time().$image->getClientOriginalName();
-            \Storage::disk('productos')->put($image_name,\File::get($image));
+            $imagen_name=time().$imagen->getClientOriginalName();
+            \Storage::disk('productos')->put($imagen_name,\File::get($imagen));
             $response=array(
                 'status'=>'success',
                 'code'=>200,
                 'message'=>'Imagen guardada correctamente',
-                'image'=>$image_name
+                'imagen'=>$imagen_name
             );
         }
         return response()->json($response,$response['code']);
@@ -194,6 +200,8 @@ class ProductosController extends Controller
                 'status'=>'error',
                 'code'=>404,
                 'message'=>'Imagen no existe'
+                
+                
             );
             return response()->json($response,404);
         }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\MetodosPago;
+use Illuminate\Support\Facades\DB;
 
 class MetodosPagoController extends Controller
 {
@@ -15,7 +16,7 @@ class MetodosPagoController extends Controller
     public function __invoke() {}
 
     public function index(){
-        $data=MetodosPago::all()->load('usuario');
+        $data = DB::select('EXECUTE pa_all_metodosPago'); 
         $response=array(
             'status'=>'success',
             'code'=>200,
@@ -25,21 +26,19 @@ class MetodosPagoController extends Controller
     }
 
     public function show($id){
-        $data=MetodosPago::find($id);
-        if(is_object($data)){
-            $data=$data->load('usuario');
+        $data=DB::select('EXECUTE pa_metodosPago_id ?', array($id));
             $response=array(
                 'status'=>'success',
                 'code'=>200,
                 'data'=>$data
             );
-        }else{
-            $response=array(
-                'status'=>'error',
-                'code'=>404,
-                'message'=>'Metodo de pago no encontrado'
-            );
-        }
+        // }else{
+        //     $response=array(
+        //         'status'=>'error',
+        //         'code'=>404,
+        //         'message'=>'Metodo de pago no encontrado'
+        //     );
+        // }
         return response()->json($response,$response['code']);
     }
 
@@ -48,10 +47,11 @@ class MetodosPagoController extends Controller
         $data=json_decode($json,true);
         $data=array_map('trim',$data);
         $rules=[
-            'id'=>'required',
+            //'id'=>'',
             'idUsuario'=>'required',
             'tipoTarjeta'=>'required',
-            'numTarjeta'=>'required'
+            'numTarjeta'=>'required',
+            'saldoFijo'=>'required'
             
         ];
         $valid=\validator($data,$rules);
@@ -65,12 +65,23 @@ class MetodosPagoController extends Controller
         
         }else{
             
-            $metodospago=new MetodosPago();
-            $metodospago->id=$data['id'];
-            $metodospago->idUsuario=$data['idUsuario'];
-            $metodospago->tipoTarjeta=$data['tipoTarjeta'];
-            $metodospago->numTarjeta=$data['numTarjeta'];
-            $metodospago->save();
+            $response = DB::INSERT(
+                'EXECUTE pa_create_metodosPago ?,?,?,?',
+            array(
+                //$data['id'],
+                $data['idUsuario'],
+                $data['tipoTarjeta'],
+                $data['numTarjeta'],
+                $data['saldoFijo']
+            ));
+    
+            // $metodospago=new MetodosPago();
+            //  $metodospago->id=$data['id'];
+            // $metodospago->idUsuario=$data['idUsuario'];
+            // $metodospago->tipoTarjeta=$data['tipoTarjeta'];
+            // $metodospago->numTarjeta=$data['numTarjeta'];
+            // $metodospago->saldoFijo=$data['saldoFijo'];
+            // $metodospago->save();
 
             $response=array(
                 'status'=>'success',
@@ -88,7 +99,7 @@ class MetodosPagoController extends Controller
         $data=array_map('trim',$data);
         $rules=[
             'id'=>'required',
-            'idUsuario'=>'required',
+            //'idUsuario'=>'required',
             'tipoTarjeta'=>'required',
             'numTarjeta'=>'required' 
         ];
@@ -103,7 +114,15 @@ class MetodosPagoController extends Controller
         }else{
             $id=$data['id'];
             
-            $updated=MetodosPago::where('id',$id)->update($data);
+            $updated = DB::UPDATE(
+                'exec pa_update_metodosPago ?,?,?,?',
+                array(
+                    $id,
+                    $data['tipoTarjeta'],
+                    $data['numTarjeta'],
+                    $data['saldoFijo']
+                )
+            );
             if($updated>0){
                 $response=array(
                     'status'=>'success',
@@ -124,7 +143,7 @@ class MetodosPagoController extends Controller
 
     public function destroy($id){
         if(isset($id)){
-            $deleted = MetodosPago::where('id',$id)->delete();
+            $deleted = DB::delete('EXECUTE pa_delete_metodosPago ?',array($id));
             if($deleted){
                 $response=array(
                     'status'=>'success',

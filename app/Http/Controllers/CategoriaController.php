@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use App\Models\Categoria;
+// use App\Models\Categoria;
+use Illuminate\Support\Facades\DB;
 
 class CategoriaController extends Controller
 {
@@ -16,8 +17,9 @@ class CategoriaController extends Controller
 
 public function __invoke() {}
 
+
 public function index(){
-    $data=Categoria::all();
+    $data = DB::select('EXECUTE pa_all_categoria'); 
     $response=array(
         'status'=>'success',
         'code'=>200,
@@ -27,20 +29,12 @@ public function index(){
 }
 
 public function show($id){
-    $categoria=Categoria::find($id);
-    if(is_object($categoria)){
+    $categoria=DB::select('EXECUTE pa_categoria_id ?', array($id));
         $response=array(
             'status'=>'success',
             'code'=>200,
             'data'=>$categoria
         );
-    }else{
-        $response=array(
-            'status'=>'error',
-            'code'=>404,
-            'message'=>'Categoria no encontrada'
-        );
-    }
     return response()->json($response,$response['code']);
 }
 
@@ -49,10 +43,8 @@ public function store(Request $request){
     $data=json_decode($json,true);
     $data=array_map('trim',$data);
     $rules=[
-        'id'=>'',
+       // 'id'=>'',
         'descripcion'=>'required',
-        
-        
     ];
     $valid=\validator($data,$rules);
     if($valid->fails()){
@@ -64,14 +56,11 @@ public function store(Request $request){
         );
     
     }else{
-        /*$jwtAuth=new JwtAuth();
-        $token=$request->header('token',null);
-        $usuario=$jwtAuth->checkToken($token,true);*/
-        
-        $categoria=new Categoria();
-        $categoria->id=$data['id'];
-        $categoria->descripcion=$data['descripcion'];
-        $categoria->save();
+        $response = DB::INSERT(
+            'EXECUTE pa_create_categoria ?',
+        array(
+           // $data['id'],
+            $data['descripcion']));
 
         $response=array(
             'status'=>'success',
@@ -102,9 +91,15 @@ public function update(Request $request){
             'errors'=>$valid->errors()
         );
     }else{
-        $id=$data['id'];
-        
-        $updated=Categoria::where('id',$id)->update($data);
+        $id = $data['id'];
+
+        $updated = DB::UPDATE(
+            'exec pa_update_categoria ?, ?',
+            array(
+                $id,
+                $data['descripcion'],
+            )
+        );
         if($updated>0){
             $response=array(
                 'status'=>'success',
@@ -115,7 +110,7 @@ public function update(Request $request){
             $response=array(
                 'status'=>'error',
                 'code'=>400,
-                'message'=>'No se pudo actualizar la direccion del usuario, puede ser que no exista'
+                'message'=>'No se pudo actualizar la categoria, puede ser que no exista'
             );
         }
     }
@@ -125,7 +120,7 @@ public function update(Request $request){
 
 public function destroy($id){
     if(isset($id)){
-        $deleted = Categoria::where('id',$id)->delete();
+        $deleted = DB::delete('EXECUTE pa_delete_categoria ?',array($id));
         if($deleted){
             $response=array(
                 'status'=>'success',

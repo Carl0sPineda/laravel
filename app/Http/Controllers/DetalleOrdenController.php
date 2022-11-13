@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\DetalleOrden;
+use App\Models\Productos;
+use App\Helpers\JwtAuth;
+use Illuminate\Support\Facades\DB;
 
 class DetalleOrdenController extends Controller
 {
@@ -12,7 +15,7 @@ class DetalleOrdenController extends Controller
 
     public function index(){
 
-        $data=DetalleOrden::all()->load("ordencompra","producto");
+        $data = DB::select('EXECUTE pa_all_detalleOrden'); 
         $response=array(
             'status' => 'success',
             'code' => '200',
@@ -21,23 +24,38 @@ class DetalleOrdenController extends Controller
 
         return response()->json($response,200);
     }
-
+    
     public function show($id){
-        $data=DetalleOrden::find($id);
-        if(is_object($data)){
-            $data=$data->load("ordencompra","producto");
+        $data=DB::select('EXECUTE pa_detalleOrden_id ?', array($id));
             $response=array(
                 'status'=>'success',
                 'code'=>200,
                 'data'=>$data
             );
-        }else{
+        // }else{
+        //     $response=array(
+        //         'status'=>'error',
+        //         'code'=>404,
+        //         'message'=>'Detalle de orden no encontrado'
+        //     );
+        // }
+        return response()->json($response,$response['code']);
+    }
+
+    public function showByOrden($id){
+        $data=DB::select('EXECUTE pa_detalleOrden_idOrden ?', array($id));
             $response=array(
-                'status'=>'error',
-                'code'=>404,
-                'message'=>'Detalle de orden no encontrado'
+                'status'=>'success',
+                'code'=>200,
+                'data'=>$data
             );
-        }
+        // }else{
+        //     $response=array(
+        //         'status'=>'error',
+        //         'code'=>404,
+        //         'message'=>'Detalle de orden no encontrado'
+        //     );
+        // }
         return response()->json($response,$response['code']);
     }
 
@@ -46,14 +64,13 @@ class DetalleOrdenController extends Controller
         $data=json_decode($json,true);
         $data=array_map('trim',$data);
         $rules=[
-            'id'=>'required',
+            //'id'=>'',
             'idOrdenCompra'=>'required',
             'idProducto'=>'required',
             'cantidad'=>'required',
             'costoUnidad'=>'required',
             'descuento'=>'required',
-            'subtotal'=>'required',
-             
+            'subtotal'=>'required'
         ];
         
         $valid=\validator($data,$rules);
@@ -66,15 +83,30 @@ class DetalleOrdenController extends Controller
             );
         
         }else{
-            $detalleorden=new DetalleOrden();
-            $detalleorden->id=$data['id'];
-            $detalleorden->idOrdenCompra=$data['idOrdenCompra'];
-            $detalleorden->idProducto=$data['idProducto'];
-            $detalleorden->cantidad=$data['cantidad'];
-            $detalleorden->costoUnidad=$data['costoUnidad'];
-            $detalleorden->descuento=$data['descuento'];
-            $detalleorden->subtotal=$data['subtotal'];
-            $detalleorden->save();
+
+            /*$jwtAuth=new JwtAuth();
+            $token=$request->header('token',null);
+            $usuario=$jwtAuth->checkToken($token,true);*/
+            $response = DB::INSERT(
+                'EXECUTE pa_create_detalleOrden ?,?,?,?,?,?',
+            array(
+                //$data['id'],
+                $data['idOrdenCompra'],
+                $data['idProducto'],
+                $data['cantidad'],
+                $data['costoUnidad'],
+                $data['descuento'],
+                $data['subtotal']
+            ));
+            // $detalleorden=new DetalleOrden();
+            //$detalleorden->id=$data['id'];
+            // $detalleorden->idOrdenCompra=$data['idOrdenCompra'];
+            // $detalleorden->idProducto=$data['idProducto'];
+            // $detalleorden->cantidad=$data['cantidad'];
+            // $detalleorden->costoUnidad=$data['costoUnidad'];
+            // $detalleorden->descuento=$data['descuento'];
+            // $detalleorden->subtotal=$data['subtotal'];
+            // $detalleorden->save();
             $response=array(
                 'status'=>'success',
                 'code'=>200,
@@ -109,8 +141,19 @@ class DetalleOrdenController extends Controller
             );
         }else{
             $id=$data['id'];
-            $updated=DetalleOrden::where('id',$id)->update($data);
-            if($updated>0){
+
+            $updated = DB::UPDATE(
+                'exec pa_update_detalleOrden ?,?,?,?,?,?,?',
+                array(
+                    $id,
+                    $data['idOrdenCompra'],
+                    $data['idProducto'],
+                    $data['cantidad'],
+                    $data['costoUnidad'],
+                    $data['descuento'],
+                    $data['subtotal']
+                )
+            );            if($updated>0){
                 $response=array(
                     'status'=>'success',
                     'code'=>200,
@@ -130,7 +173,7 @@ class DetalleOrdenController extends Controller
 
     public function destroy($id){
         if(isset($id)){
-            $deleted = DetalleOrden::where('id',$id)->delete();
+            $deleted = DB::delete('EXECUTE pa_delete_detalleOrden ?',array($id));
             if($deleted){
                 $response=array(
                     'status'=>'success',

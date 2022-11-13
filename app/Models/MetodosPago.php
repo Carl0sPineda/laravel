@@ -14,7 +14,8 @@ class MetodosPago extends Model
         'id',
         'idUsuario',
         'tipoTarjeta',
-        'numTarjeta'
+        'numTarjeta',
+        'saldoFijo'
 
     ];
 

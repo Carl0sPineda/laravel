@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\Telefonos;
+use Illuminate\Support\Facades\DB;
 
 class TelefonosController extends Controller
 {
@@ -15,7 +16,7 @@ class TelefonosController extends Controller
     public function __invoke() {}
 
     public function index(){
-        $data=Telefonos::all()->load('usuario');
+        $data = DB::select('EXECUTE pa_all_telefono'); 
         $response=array(
             'status'=>'success',
             'code'=>200,
@@ -25,21 +26,13 @@ class TelefonosController extends Controller
     }
 
     public function show($id){
-        $data=Telefonos::find($id);
-        if(is_object($data)){
-            $data=$data->load('usuario');
+        $data=DB::select('EXECUTE pa_telefono_id ?', array($id));
+           // $data=$data->load('usuario');
             $response=array(
                 'status'=>'success',
                 'code'=>200,
                 'data'=>$data
             );
-        }else{
-            $response=array(
-                'status'=>'error',
-                'code'=>404,
-                'message'=>'Usuario no encontrado'
-            );
-        }
         return response()->json($response,$response['code']);
     }
 
@@ -48,7 +41,7 @@ class TelefonosController extends Controller
         $data=json_decode($json,true);
         $data=array_map('trim',$data);
         $rules=[
-            'id'=>'required',
+            //'id'=>'required',
             'idUsuario'=>'required',
             'numTelefono'=>'required|unique:telefonos'
             
@@ -63,11 +56,12 @@ class TelefonosController extends Controller
             );
         
         }else{
-            $telefonos=new Telefonos();
-            $telefonos->id=$data['id'];
-            $telefonos->idUsuario=$data['idUsuario'];
-            $telefonos->numTelefono=$data['numTelefono'];
-            $telefonos->save();
+          
+            $response = DB::INSERT( 'EXECUTE pa_create_telefono ?,?',
+            array(
+               // $data['id'],
+                $data['idUsuario'],
+                $data['numTelefono']));
 
             $response=array(
                 'status'=>'success',
@@ -85,10 +79,8 @@ class TelefonosController extends Controller
         $data=array_map('trim',$data);
         $rules=[
             'id'=>'required',
-            'idUsuario'=>'required',
+            // 'idUsuario'=>'required',
             'numTelefono'=>'required'
-            
-            
         ];
         $valid=\validator($data,$rules);
         if($valid->fails()){
@@ -101,7 +93,13 @@ class TelefonosController extends Controller
         }else{
             $id=$data['id'];
             
-            $updated=Telefonos::where('id',$id)->update($data);
+            $updated = DB::UPDATE(
+                'exec pa_update_telefono ?, ?',
+                array(
+                    $id,
+                    $data['numTelefono']
+                )
+            );
             if($updated>0){
                 $response=array(
                     'status'=>'success',
@@ -122,7 +120,7 @@ class TelefonosController extends Controller
 
     public function destroy($id){
         if(isset($id)){
-            $deleted = Telefonos::where('id',$id)->delete();
+            $deleted = DB::delete('EXECUTE pa_delete_telefono ?',array($id));
             if($deleted){
                 $response=array(
                     'status'=>'success',

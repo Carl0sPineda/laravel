@@ -17,7 +17,8 @@ class JwtAuth{
      * o devuelve un arreglo con un mensaje en caso de que la autenticación sea incorrecta
      */
     public function getToken($email,$contrasenia){
-        $usuario=Usuario::where(['email'=>$email,'contrasenia'=>hash('sha256',$contrasenia)])->first();
+      $usuario=Usuario::where(['email'=>$email,'contrasenia'=>hash('sha256',$contrasenia)])->first();
+      //$usuario=Usuario::where(['email'=>$email,'contrasenia'=>$contrasenia])->first();
         if(is_object($usuario)){
             $token=array(
                 'sub'=>$usuario->id,
@@ -27,7 +28,7 @@ class JwtAuth{
                 'email'=>$usuario->email,
                 'image'=>$usuario->image,
                 'iat'=>time(),
-                'exp'=>time()+(1800)
+                'exp'=>time()+(600)
             );
 
             $data=JWT::encode($token,$this->key,'HS256');

@@ -13,7 +13,6 @@ class SeguimientoCompra extends Model
     protected $fillable = [
         'id',
         'idOrdenCompra',
-        'fechaEnvio',
         'fechaEntrega',
         'numeroGuia',
         'estado'

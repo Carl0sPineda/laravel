@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\SeguimientoCompra;
+use Illuminate\Support\Facades\DB;
 
 class SeguimientoCompraController extends Controller
 {
@@ -13,9 +14,9 @@ class SeguimientoCompraController extends Controller
     }
 
     public function __invoke() {}
-
+    
     public function index(){
-        $data=SeguimientoCompra::all()->load('ordencompra');
+        $data = DB::select('EXECUTE pa_all_seguimientoCompra'); 
         $response=array(
             'status'=>'success',
             'code'=>200,
@@ -25,21 +26,13 @@ class SeguimientoCompraController extends Controller
     }
 
     public function show($id){
-        $data=SeguimientoCompra::find($id);
-        if(is_object($data)){
-            $data=$data->load('ordencompra');
+        $data=DB::select('EXECUTE pa_seguimientoCompra_id ?', array($id));
             $response=array(
                 'status'=>'success',
                 'code'=>200,
                 'data'=>$data
             );
-        }else{
-            $response=array(
-                'status'=>'error',
-                'code'=>404,
-                'message'=>'Seguimiento de Compra no encontrado'
-            );
-        }
+
         return response()->json($response,$response['code']);
     }
 
@@ -49,9 +42,8 @@ class SeguimientoCompraController extends Controller
         $data=json_decode($json,true);
         $data=array_map('trim',$data);
         $rules=[
-            'id'=>'required',
+            //'id'=>'',
             'idOrdenCompra'=>'required',
-            'fechaEnvio'=>'required',
             'fechaEntrega'=>'required',
             'numeroGuia'=>'required',
             'estado'=>'required'
@@ -67,15 +59,14 @@ class SeguimientoCompraController extends Controller
             );
         
         }else{
-
-            $seguimientoCompra=new SeguimientoCompra();
-            $seguimientoCompra->id=$data['id'];
-            $seguimientoCompra->idOrdenCompra=$data['idOrdenCompra'];
-            $seguimientoCompra->fechaEnvio=$data['fechaEnvio'];
-            $seguimientoCompra->fechaEntrega=$data['fechaEntrega'];
-            $seguimientoCompra->numeroGuia=$data['numeroGuia'];
-            $seguimientoCompra->estado=$data['estado'];
-            $seguimientoCompra->save();
+            $response = DB::INSERT(
+                'EXECUTE pa_create_seguimientoCompra ?,?,?,?',
+            array(
+                //$data['id'],
+                $data['idOrdenCompra'],
+                $data['fechaEntrega'],
+                $data['numeroGuia'],
+                $data['estado']));
 
             $response=array(
                 'status'=>'success',
@@ -93,8 +84,7 @@ class SeguimientoCompraController extends Controller
         $data=array_map('trim',$data);
         $rules=[
             'id'=>'required',
-            'idOrdenCompra'=>'required',
-            'fechaEnvio'=>'required',
+            //'idOrdenCompra'=>'required',
             'fechaEntrega'=>'required',
             'numeroGuia'=>'required',
             'estado'=>'required'
@@ -111,8 +101,18 @@ class SeguimientoCompraController extends Controller
             );
         }else{
             $id=$data['id'];
+
+            $updated = DB::UPDATE(
+                'exec pa_update_seguimientoCompra ?,?,?,?',
+                array(
+                    $id,
+                    //$data['idOrdenCompra'],
+                    $data['fechaEntrega'],
+                    $data['numeroGuia'],
+                    $data['estado']
+                )
+            );
             
-            $updated=SeguimientoCompra::where('id',$id)->update($data);
             if($updated>0){
                 $response=array(
                     'status'=>'success',
@@ -133,7 +133,7 @@ class SeguimientoCompraController extends Controller
 
     public function destroy($id){
         if(isset($id)){
-            $deleted = SeguimientoCompra::where('id',$id)->delete();
+            $deleted = DB::delete('EXECUTE pa_delete_seguimientoCompra ?',array($id));
             if($deleted){
                 $response=array(
                     'status'=>'success',

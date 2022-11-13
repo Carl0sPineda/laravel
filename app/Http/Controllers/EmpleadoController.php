@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\Empleado;
+use Illuminate\Support\Facades\DB;
 
 class EmpleadoController extends Controller
 {
@@ -16,7 +17,7 @@ class EmpleadoController extends Controller
     public function __invoke() {}
 
     public function index(){
-        $data=Empleado::all();
+        $data = DB::select('EXECUTE pa_all_empleado'); 
         $response=array(
             'status'=>'success',
             'code'=>200,
@@ -26,20 +27,19 @@ class EmpleadoController extends Controller
     }
 
     public function show($id){
-        $empleado=Empleado::find($id);
-        if(is_object($empleado)){
+        $categoria=DB::select('EXECUTE pa_empleado_id ?', array($id));
             $response=array(
                 'status'=>'success',
                 'code'=>200,
                 'data'=>$empleado
             );
-        }else{
-            $response=array(
-                'status'=>'error',
-                'code'=>404,
-                'message'=>'Empleado no encontrado'
-            );
-        }
+        // }else{
+        //     $response=array(
+        //         'status'=>'error',
+        //         'code'=>404,
+        //         'message'=>'Empleado no encontrado'
+        //     );
+        // }
         return response()->json($response,$response['code']);
     }
 
@@ -48,7 +48,7 @@ class EmpleadoController extends Controller
         $data=json_decode($json,true);
         $data=array_map('trim',$data);
         $rules=[
-            'id'=>'required',
+            'id'=>'',
             'nombre'=>'required',
             'apellidos'=>'required',
             'email'=>'required|email|unique:empleado',
@@ -65,13 +65,23 @@ class EmpleadoController extends Controller
             );
         
         }else{
-            $empleado=new Empleado();
-            $empleado->id=$data['id'];
-            $empleado->nombre=$data['nombre'];
-            $empleado->apellidos=$data['apellidos'];
-            $empleado->email=$data['email'];
-            $empleado->telefono=$data['telefono'];
-            $empleado->save();
+            $response = DB::INSERT(
+                'EXECUTE pa_create_empleado ?,?,?,?,?',
+            array(
+                $data['id'],
+                $data['nombre'],
+                $data['apellidos'],
+                $data['email'],
+                $data['telefono']
+            ));
+    
+            // $empleado=new Empleado();
+            // $empleado->id=$data['id'];
+            // $empleado->nombre=$data['nombre'];
+            // $empleado->apellidos=$data['apellidos'];
+            // $empleado->email=$data['email'];
+            // $empleado->telefono=$data['telefono'];
+            // $empleado->save();
             $response=array(
                 'status'=>'success',
                 'code'=>200,
@@ -88,6 +98,10 @@ class EmpleadoController extends Controller
         $data=array_map('trim',$data);
         $rules=[
             'id'=>'required',
+            'nombre'=>'',
+            'apellidos'=>'',
+            'email'=>'',
+            'telefono'=>''
             
         ];
         $valid=\validator($data,$rules);
@@ -101,7 +115,16 @@ class EmpleadoController extends Controller
         }else{
             $id=$data['id'];
             
-            $updated=Empleado::where('id',$id)->update($data);
+            $updated = DB::UPDATE(
+                'exec pa_update_empleado  ?,?,?,?,?',
+                array(
+                    $id,
+                    $data['nombre'],
+                    $data['apellidos'],
+                    $data['email'],
+                    $data['telefono']
+                )
+            );
             if($updated>0){
                 $response=array(
                     'status'=>'success',
@@ -122,7 +145,7 @@ class EmpleadoController extends Controller
 
     public function destroy($id){
         if(isset($id)){
-            $deleted = Empleado::where('id',$id)->delete();
+            $deleted = DB::delete('EXECUTE  pa_delete_empleado ?',array($id));
             if($deleted){
                 $response=array(
                     'status'=>'success',
